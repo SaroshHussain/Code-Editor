@@ -14,8 +14,7 @@ namespace Code_Editor
             InitializeComponent();
             InitializeWebView();
         }
-        
-        private Dictionary<string, string> openFiles = new Dictionary<string, string>();
+        private CustomStack openFiles = new CustomStack();
         private Dictionary<string, Button> fileButtons = new Dictionary<string, Button>();
         private string currentFile = "";
         private Button activeButton = null;
@@ -29,7 +28,7 @@ namespace Code_Editor
 
                 if (!openFiles.ContainsKey(fileName))
                 {
-                    openFiles[fileName] = content;
+                    openFiles.Set(fileName, content);
 
                     Button fileBtn = new Button();
                     fileBtn.Text = fileName;
@@ -42,7 +41,7 @@ namespace Code_Editor
                     fileBtn.ForeColor = Color.White;
                     fileBtn.TextAlign = ContentAlignment.MiddleLeft;
                     fileBtn.Click += (s, e) => SwitchToFile(fileName);
-                    
+
                     fileButtons[fileName] = fileBtn;
                     splitContainer1.Panel1.Controls.Add(fileBtn);
                 }
@@ -69,8 +68,8 @@ namespace Code_Editor
             }
 
             currentFile = fileName;
-            
-            string code = openFiles[fileName];
+
+            string code = openFiles.Get(fileName);
             string escapedCode = System.Text.Json.JsonSerializer.Serialize(code);
             await editor.ExecuteScriptAsync($"setEditorCode({escapedCode});");
         }
@@ -94,18 +93,20 @@ namespace Code_Editor
         {
             try
             {
+                await SaveCurrentFile();
+
                 string fileExtension = Path.GetExtension(currentFile).ToLower();
 
                 if (fileExtension == ".cpp" || fileExtension == ".cc" || fileExtension == ".cxx" || fileExtension == ".c")
                 {
-                    string cppCode = openFiles[currentFile];
+                    string cppCode = openFiles.Get(currentFile);
                     string output = await ExecuteCppCode(cppCode);
                     code_output.Text = output;
                 }
                 else
                 {
                     string outputJson = await editor.ExecuteScriptAsync("executeCode();");
-                    
+
                     string output = System.Text.Json.JsonSerializer.Deserialize<string>(outputJson);
                     code_output.Text = output;
                 }
@@ -120,6 +121,23 @@ namespace Code_Editor
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFile();
+        }
+
+        private async Task SaveCurrentFile()
+        {
+            if (string.IsNullOrEmpty(currentFile))
+                return;
+
+            try
+            {
+                string code = await editor.ExecuteScriptAsync("getEditorCode();");
+                string editorCode = System.Text.Json.JsonSerializer.Deserialize<string>(code);
+                openFiles.Set(currentFile, editorCode);
+            }
+            catch (Exception ex)
+            {
+                code_output.Text = "Save Error: " + ex.Message;
+            }
         }
 
         // C++ Execution Methods
@@ -189,6 +207,14 @@ namespace Code_Editor
             {
                 return "Failed to execute: " + ex.Message;
             }
+        }
+      
+
+        private async void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Saving current file...");
+            await SaveCurrentFile();
+
         }
     }
 }

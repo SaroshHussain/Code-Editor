@@ -130,8 +130,8 @@
             openToolStripMenuItem.BackColor = Color.FromArgb(60, 63, 65);
             openToolStripMenuItem.ForeColor = Color.FromArgb(220, 220, 220);
             openToolStripMenuItem.Name = "openToolStripMenuItem";
-            openToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.O;
-            openToolStripMenuItem.Size = new Size(181, 26);
+            openToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.D0;
+            openToolStripMenuItem.Size = new Size(224, 26);
             openToolStripMenuItem.Text = "Open";
             openToolStripMenuItem.Click += openToolStripMenuItem_Click;
             // 
@@ -140,16 +140,17 @@
             saveToolStripMenuItem.BackColor = Color.FromArgb(60, 63, 65);
             saveToolStripMenuItem.ForeColor = Color.FromArgb(220, 220, 220);
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            saveToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.S;
-            saveToolStripMenuItem.Size = new Size(181, 26);
+            saveToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.D1;
+            saveToolStripMenuItem.Size = new Size(224, 26);
             saveToolStripMenuItem.Text = "Save";
+            saveToolStripMenuItem.Click += saveToolStripMenuItem_Click;
             // 
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.BackColor = Color.FromArgb(60, 63, 65);
             exitToolStripMenuItem.ForeColor = Color.FromArgb(220, 220, 220);
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new Size(181, 26);
+            exitToolStripMenuItem.Size = new Size(224, 26);
             exitToolStripMenuItem.Text = "Exit";
             // 
             // editToolStripMenuItem
@@ -229,6 +230,7 @@
         }
 
         #endregion
+
 
         private SplitContainer splitContainer1;
         private SplitContainer splitContainer2;
