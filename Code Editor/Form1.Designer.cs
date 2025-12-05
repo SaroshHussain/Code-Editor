@@ -130,7 +130,7 @@
             openToolStripMenuItem.BackColor = Color.FromArgb(60, 63, 65);
             openToolStripMenuItem.ForeColor = Color.FromArgb(220, 220, 220);
             openToolStripMenuItem.Name = "openToolStripMenuItem";
-            openToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.D0;
+            openToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.O;
             openToolStripMenuItem.Size = new Size(224, 26);
             openToolStripMenuItem.Text = "Open";
             openToolStripMenuItem.Click += openToolStripMenuItem_Click;
@@ -140,7 +140,7 @@
             saveToolStripMenuItem.BackColor = Color.FromArgb(60, 63, 65);
             saveToolStripMenuItem.ForeColor = Color.FromArgb(220, 220, 220);
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            saveToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.D1;
+            saveToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Q;
             saveToolStripMenuItem.Size = new Size(224, 26);
             saveToolStripMenuItem.Text = "Save";
             saveToolStripMenuItem.Click += saveToolStripMenuItem_Click;
