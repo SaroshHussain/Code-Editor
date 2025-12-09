@@ -111,10 +111,12 @@
             code_queue.BackColor = SystemColors.WindowFrame;
             code_queue.Dock = DockStyle.Bottom;
             code_queue.FormattingEnabled = true;
+            code_queue.Items.AddRange(new object[] { "eello" });
             code_queue.Location = new Point(0, 206);
             code_queue.Name = "code_queue";
             code_queue.Size = new Size(318, 264);
             code_queue.TabIndex = 1;
+            code_queue.SelectedIndexChanged += code_queue_SelectedIndexChanged;
             // 
             // code_output
             // 

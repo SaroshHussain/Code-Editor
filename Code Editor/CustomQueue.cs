@@ -13,6 +13,7 @@ namespace Code_Editor
             public string fileName;
             public string fileContent;
             public DateTime timestamp;
+            public string filePath;
         }
 
         private readonly List<QueueElement> elements = new List<QueueElement>();

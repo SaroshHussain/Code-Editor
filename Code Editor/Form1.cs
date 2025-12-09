@@ -21,9 +21,11 @@ namespace Code_Editor
         private CustomStack openFiles = new CustomStack();
         private CustomQueue snapshotQueue = new CustomQueue();
         private Dictionary<string, Button> fileButtons = new Dictionary<string, Button>();
+        private Dictionary<string, string> filePaths = new Dictionary<string, string>();
         private string currentFile = "";
         private Button activeButton = null;
         private System.Windows.Forms.Timer autoSaveTimer;
+        private bool isViewingSnapshot = false;
 
         private void OpenFile()
         {
@@ -36,6 +38,7 @@ namespace Code_Editor
                 if (!openFiles.ContainsKey(fileName))
                 {
                     openFiles.Set(fileName, content);
+                    filePaths[fileName] = ofd.FileName;
 
                     Button fileBtn = new Button();
                     fileBtn.Text = fileName;
@@ -59,6 +62,21 @@ namespace Code_Editor
 
         private async void SwitchToFile(string fileName)
         {
+            // Save current editor content before switching if not viewing snapshot
+            if (!string.IsNullOrEmpty(currentFile) && !isViewingSnapshot)
+            {
+                try
+                {
+                    string code = await editor.ExecuteScriptAsync("getEditorCode();");
+                    string editorCode = JsonSerializer.Deserialize<string>(code);
+                    openFiles.Set(currentFile, editorCode);
+                }
+                catch { }
+            }
+
+            isViewingSnapshot = false;
+            this.Text = "Code Editor";
+
             if (activeButton != null)
             {
                 activeButton.BackColor = ColorTranslator.FromHtml("#2d2d30");
@@ -74,9 +92,9 @@ namespace Code_Editor
 
             currentFile = fileName;
 
-            string code = openFiles.Get(fileName);
+            string content = openFiles.Get(fileName);
             string language = GetLanguageFromExtension(fileName);
-            string escapedCode = JsonSerializer.Serialize(code);
+            string escapedCode = JsonSerializer.Serialize(content);
             await editor.ExecuteScriptAsync($"setEditorCode({escapedCode}, '{language}');");
         }
 
@@ -85,7 +103,7 @@ namespace Code_Editor
             string extension = Path.GetExtension(fileName).ToLower();
             return extension switch
             {
-                ".cpp"  => "cpp",
+                ".cpp" => "cpp",
                 ".js" => "javascript",
                 ".ts" => "typescript",
                 ".py" => "python",
@@ -114,7 +132,8 @@ namespace Code_Editor
 
                 string fileExtension = Path.GetExtension(currentFile).ToLower();
 
-                if (fileExtension == ".cpp")   {
+                if (fileExtension == ".cpp")
+                {
                     string cppCode = openFiles.Get(currentFile);
                     string output = await CompileCppWithPowerShell(cppCode);
                     code_output.Text = output;
@@ -132,7 +151,6 @@ namespace Code_Editor
             }
         }
 
-        // Simplified C++ compilation using MSYS2 with static linking
         private async Task<string> CompileCppWithPowerShell(string cppCode)
         {
             string tempDir = Path.Combine(Path.GetTempPath(), "CppCodeRunner");
@@ -145,7 +163,6 @@ namespace Code_Editor
             {
                 File.WriteAllText(sourceFile, cppCode);
 
-                // Invoke MSYS2 MinGW64 terminal and compile with g++ using static flags
                 var compileProcess = new ProcessStartInfo
                 {
                     FileName = @"C:\msys64\msys2_shell.cmd",
@@ -165,7 +182,6 @@ namespace Code_Editor
                     await p.WaitForExitAsync();
                 }
 
-                // Wait a moment for file system
                 await Task.Delay(500);
 
                 if (!File.Exists(exeFile))
@@ -173,7 +189,6 @@ namespace Code_Editor
                     return "❌ Compilation Failed:\n" + compileErrors + "\n" + compileOutput;
                 }
 
-                // Run the executable in a new terminal window so user can interact with cin/cout
                 var runProcess = new ProcessStartInfo
                 {
                     FileName = "cmd.exe",
@@ -199,6 +214,7 @@ namespace Code_Editor
                 catch { }
             }
         }
+
         private async Task SaveCurrentFile()
         {
             if (string.IsNullOrEmpty(currentFile))
@@ -209,6 +225,7 @@ namespace Code_Editor
                 string code = await editor.ExecuteScriptAsync("getEditorCode();");
                 string editorCode = JsonSerializer.Deserialize<string>(code);
                 openFiles.Set(currentFile, editorCode);
+                isViewingSnapshot = false;
             }
             catch (Exception ex)
             {
@@ -248,14 +265,14 @@ namespace Code_Editor
         private void InitializeAutoSaveTimer()
         {
             autoSaveTimer = new System.Windows.Forms.Timer();
-            autoSaveTimer.Interval = 3000; // 3 seconds interval
+            autoSaveTimer.Interval = 8000;
             autoSaveTimer.Tick += async (s, e) => await CaptureSnapshot();
             autoSaveTimer.Start();
         }
 
         private async Task CaptureSnapshot()
         {
-            if (string.IsNullOrEmpty(currentFile))
+            if (string.IsNullOrEmpty(currentFile) || isViewingSnapshot)
                 return;
 
             try
@@ -267,7 +284,8 @@ namespace Code_Editor
                 {
                     fileName = currentFile,
                     fileContent = editorCode,
-                    timestamp = DateTime.Now
+                    timestamp = DateTime.Now,
+                    filePath = filePaths.ContainsKey(currentFile) ? filePaths[currentFile] : ""
                 });
 
                 UpdateSnapshotListBox();
@@ -283,8 +301,7 @@ namespace Code_Editor
             foreach (var snapshot in snapshots)
             {
                 string displayText = $"{snapshot.fileName} - {snapshot.timestamp:HH:mm:ss}";
-                code_queue.Items.Add(snapshot);
-                code_queue.Items[code_queue.Items.Count - 1] = displayText;
+                code_queue.Items.Add(displayText);
             }
         }
 
@@ -293,13 +310,30 @@ namespace Code_Editor
             if (code_queue.SelectedIndex < 0)
                 return;
 
+
+            // Save current editor content before viewing snapshot
+            if (!string.IsNullOrEmpty(currentFile) && !isViewingSnapshot)
+            {
+                try
+                {
+                    string currentCode = await editor.ExecuteScriptAsync("getEditorCode();");
+                    string currentEditorCode = JsonSerializer.Deserialize<string>(currentCode);
+                    openFiles.Set(currentFile, currentEditorCode);
+                }
+                catch { }
+            }
+
             var snapshots = snapshotQueue.GetAll();
             if (code_queue.SelectedIndex < snapshots.Count)
             {
                 var snapshot = snapshots[code_queue.SelectedIndex];
                 string language = GetLanguageFromExtension(snapshot.fileName);
                 string escapedCode = JsonSerializer.Serialize(snapshot.fileContent);
+
                 await editor.ExecuteScriptAsync($"setEditorCode({escapedCode}, '{language}');");
+
+                isViewingSnapshot = true;
+                this.Text = $"Code Editor - Snapshot: {snapshot.fileName} ({snapshot.timestamp:HH:mm:ss})";
             }
         }
     }
