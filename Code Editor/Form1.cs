@@ -15,12 +15,15 @@ namespace Code_Editor
             InitializeWebView();
             this.KeyPreview = true;
             this.KeyDown += Form1_KeyDown;
+            InitializeAutoSaveTimer();
         }
 
         private CustomStack openFiles = new CustomStack();
+        private CustomQueue snapshotQueue = new CustomQueue();
         private Dictionary<string, Button> fileButtons = new Dictionary<string, Button>();
         private string currentFile = "";
         private Button activeButton = null;
+        private System.Windows.Forms.Timer autoSaveTimer;
 
         private void OpenFile()
         {
@@ -72,8 +75,22 @@ namespace Code_Editor
             currentFile = fileName;
 
             string code = openFiles.Get(fileName);
+            string language = GetLanguageFromExtension(fileName);
             string escapedCode = JsonSerializer.Serialize(code);
-            await editor.ExecuteScriptAsync($"setEditorCode({escapedCode});");
+            await editor.ExecuteScriptAsync($"setEditorCode({escapedCode}, '{language}');");
+        }
+
+        private string GetLanguageFromExtension(string fileName)
+        {
+            string extension = Path.GetExtension(fileName).ToLower();
+            return extension switch
+            {
+                ".cpp"  => "cpp",
+                ".js" => "javascript",
+                ".ts" => "typescript",
+                ".py" => "python",
+                _ => "plaintext"
+            };
         }
 
         private async void InitializeWebView()
@@ -97,8 +114,7 @@ namespace Code_Editor
 
                 string fileExtension = Path.GetExtension(currentFile).ToLower();
 
-                if (fileExtension == ".cpp" || fileExtension == ".cc" || fileExtension == ".cxx" || fileExtension == ".c")
-                {
+                if (fileExtension == ".cpp")   {
                     string cppCode = openFiles.Get(currentFile);
                     string output = await CompileCppWithPowerShell(cppCode);
                     code_output.Text = output;
@@ -179,7 +195,6 @@ namespace Code_Editor
                 try
                 {
                     if (File.Exists(sourceFile)) File.Delete(sourceFile);
-                    // Don't delete exe immediately as it's still running
                 }
                 catch { }
             }
@@ -228,6 +243,64 @@ namespace Code_Editor
         {
             await SaveCurrentFile();
             MessageBox.Show("File saved!");
+        }
+
+        private void InitializeAutoSaveTimer()
+        {
+            autoSaveTimer = new System.Windows.Forms.Timer();
+            autoSaveTimer.Interval = 3000; // 3 seconds interval
+            autoSaveTimer.Tick += async (s, e) => await CaptureSnapshot();
+            autoSaveTimer.Start();
+        }
+
+        private async Task CaptureSnapshot()
+        {
+            if (string.IsNullOrEmpty(currentFile))
+                return;
+
+            try
+            {
+                string code = await editor.ExecuteScriptAsync("getEditorCode();");
+                string editorCode = JsonSerializer.Deserialize<string>(code);
+
+                snapshotQueue.Enqueue(new CustomQueue.QueueElement
+                {
+                    fileName = currentFile,
+                    fileContent = editorCode,
+                    timestamp = DateTime.Now
+                });
+
+                UpdateSnapshotListBox();
+            }
+            catch { }
+        }
+
+        private void UpdateSnapshotListBox()
+        {
+            code_queue.Items.Clear();
+            var snapshots = snapshotQueue.GetAll();
+
+            foreach (var snapshot in snapshots)
+            {
+                string displayText = $"{snapshot.fileName} - {snapshot.timestamp:HH:mm:ss}";
+                code_queue.Items.Add(snapshot);
+                code_queue.Items[code_queue.Items.Count - 1] = displayText;
+            }
+        }
+
+        private async void code_queue_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (code_queue.SelectedIndex < 0)
+                return;
+
+            var snapshots = snapshotQueue.GetAll();
+            if (code_queue.SelectedIndex < snapshots.Count)
+            {
+                var snapshot = snapshots[code_queue.SelectedIndex];
+                string language = GetLanguageFromExtension(snapshot.fileName);
+                string escapedCode = JsonSerializer.Serialize(snapshot.fileContent);
+                await editor.ExecuteScriptAsync($"setEditorCode({escapedCode}, '{language}');");
+            }
         }
     }
 }

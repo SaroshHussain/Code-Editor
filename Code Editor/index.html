@@ -24,7 +24,7 @@
         require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor/min/vs' }});
         require(['vs/editor/editor.main'], function() {
             window.editor = monaco.editor.create(document.getElementById('container'), {
-                value: '// Write your JavaScript code here\nconsole.log("Hello, World!");\n\nlet x = 10;\nlet y = 20;\nconsole.log("Sum:", x + y);',
+                value: '// Write your JavaScript code here\n#include <iostream>\nusing namespace std;\nint main(){cout<<"Hello wolrd"; return 0;}',
                 language: 'javascript', 
                 theme: "vs-dark",
                 fontSize: 14,
@@ -33,15 +33,18 @@
             
             window.addEventListener('resize', function() {
                 editor.layout();
-            });
+                });
         });
 
         window.getEditorCode = function() {
             return editor.getValue();
         };
 
-        window.setEditorCode = function(code) {
+        window.setEditorCode = function(code, language) {
             editor.setValue(code);
+            if (language) {
+                monaco.editor.setModelLanguage(editor.getModel(), language);
+            }
         };
 
         window.executeCode = function() {

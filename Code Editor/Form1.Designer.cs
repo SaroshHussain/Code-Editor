@@ -31,6 +31,7 @@
             splitContainer1 = new SplitContainer();
             splitContainer2 = new SplitContainer();
             editor = new Microsoft.Web.WebView2.WinForms.WebView2();
+            code_queue = new ListBox();
             code_output = new RichTextBox();
             fileToolStripMenuItem = new ToolStripMenuItem();
             openToolStripMenuItem = new ToolStripMenuItem();
@@ -85,6 +86,7 @@
             // splitContainer2.Panel2
             // 
             splitContainer2.Panel2.BackColor = Color.FromArgb(32, 32, 32);
+            splitContainer2.Panel2.Controls.Add(code_queue);
             splitContainer2.Panel2.Controls.Add(code_output);
             splitContainer2.Size = new Size(929, 470);
             splitContainer2.SplitterDistance = 607;
@@ -103,6 +105,16 @@
             editor.Size = new Size(607, 470);
             editor.TabIndex = 0;
             editor.ZoomFactor = 1D;
+            // 
+            // code_queue
+            // 
+            code_queue.BackColor = SystemColors.WindowFrame;
+            code_queue.Dock = DockStyle.Bottom;
+            code_queue.FormattingEnabled = true;
+            code_queue.Location = new Point(0, 206);
+            code_queue.Name = "code_queue";
+            code_queue.Size = new Size(318, 264);
+            code_queue.TabIndex = 1;
             // 
             // code_output
             // 
@@ -131,7 +143,7 @@
             openToolStripMenuItem.ForeColor = Color.FromArgb(220, 220, 220);
             openToolStripMenuItem.Name = "openToolStripMenuItem";
             openToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.O;
-            openToolStripMenuItem.Size = new Size(224, 26);
+            openToolStripMenuItem.Size = new Size(181, 26);
             openToolStripMenuItem.Text = "Open";
             openToolStripMenuItem.Click += openToolStripMenuItem_Click;
             // 
@@ -140,8 +152,8 @@
             saveToolStripMenuItem.BackColor = Color.FromArgb(60, 63, 65);
             saveToolStripMenuItem.ForeColor = Color.FromArgb(220, 220, 220);
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            saveToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Q;
-            saveToolStripMenuItem.Size = new Size(224, 26);
+            saveToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.S;
+            saveToolStripMenuItem.Size = new Size(181, 26);
             saveToolStripMenuItem.Text = "Save";
             saveToolStripMenuItem.Click += saveToolStripMenuItem_Click;
             // 
@@ -150,7 +162,7 @@
             exitToolStripMenuItem.BackColor = Color.FromArgb(60, 63, 65);
             exitToolStripMenuItem.ForeColor = Color.FromArgb(220, 220, 220);
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new Size(224, 26);
+            exitToolStripMenuItem.Size = new Size(181, 26);
             exitToolStripMenuItem.Text = "Exit";
             // 
             // editToolStripMenuItem
@@ -245,5 +257,6 @@
         private ToolStripMenuItem followToolStripMenuItem;
         private ToolStripMenuItem run_code;
         private ReaLTaiizor.Controls.CrownMenuStrip crownMenuStrip1;
+        private ListBox code_queue;
     }
 }

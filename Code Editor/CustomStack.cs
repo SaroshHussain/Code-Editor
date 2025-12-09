@@ -43,7 +43,6 @@ namespace Code_Editor
         {
             return top == -1;
         }
-
         public bool ContainsKey(string fileName)
         {
             return elements.Any(e => e.fileName == fileName);
