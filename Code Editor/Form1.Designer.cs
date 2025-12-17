@@ -42,6 +42,7 @@
             followToolStripMenuItem = new ToolStripMenuItem();
             run_code = new ToolStripMenuItem();
             crownMenuStrip1 = new ReaLTaiizor.Controls.CrownMenuStrip();
+            saveToMemoryToolStripMenuItem = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
@@ -206,13 +207,23 @@
             crownMenuStrip1.BackColor = Color.Black;
             crownMenuStrip1.ForeColor = Color.FromArgb(220, 220, 220);
             crownMenuStrip1.ImageScalingSize = new Size(20, 20);
-            crownMenuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, helpToolStripMenuItem, followToolStripMenuItem, run_code });
+            crownMenuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, helpToolStripMenuItem, followToolStripMenuItem, run_code, saveToMemoryToolStripMenuItem });
             crownMenuStrip1.Location = new Point(3, 48);
             crownMenuStrip1.Name = "crownMenuStrip1";
             crownMenuStrip1.Padding = new Padding(3, 2, 0, 2);
             crownMenuStrip1.Size = new Size(1125, 28);
             crownMenuStrip1.TabIndex = 1;
             crownMenuStrip1.Text = "crownMenuStrip1";
+            // 
+            // saveToMemoryToolStripMenuItem
+            // 
+            saveToMemoryToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
+            saveToMemoryToolStripMenuItem.BackColor = Color.FromArgb(60, 63, 65);
+            saveToMemoryToolStripMenuItem.ForeColor = Color.FromArgb(220, 220, 220);
+            saveToMemoryToolStripMenuItem.Name = "saveToMemoryToolStripMenuItem";
+            saveToMemoryToolStripMenuItem.Size = new Size(131, 24);
+            saveToMemoryToolStripMenuItem.Text = "Save to Memory";
+            saveToMemoryToolStripMenuItem.Click += saveToMemoryToolStripMenuItem_Click;
             // 
             // Form1
             // 
@@ -260,5 +271,6 @@
         private ToolStripMenuItem run_code;
         private ReaLTaiizor.Controls.CrownMenuStrip crownMenuStrip1;
         private ListBox code_queue;
+        private ToolStripMenuItem saveToMemoryToolStripMenuItem;
     }
 }

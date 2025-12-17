@@ -17,7 +17,7 @@ namespace Code_Editor
         }
 
         private readonly List<QueueElement> elements = new List<QueueElement>();
-        private readonly int maxCapacity = 10;
+        private readonly int maxCapacity = 50;
 
         public void Enqueue(QueueElement element)
         {

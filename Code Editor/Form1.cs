@@ -17,7 +17,6 @@ namespace Code_Editor
             InitializeWebView();
             this.KeyPreview = true;
             this.KeyDown += Form1_KeyDown;
-            InitializeAutoSaveTimer();
         }
 
         private CustomLinkedList openFiles = new CustomLinkedList();
@@ -25,7 +24,6 @@ namespace Code_Editor
         private Dictionary<string, Button> fileButtons = new Dictionary<string, Button>();
         private string currentFile = "";
         private Button activeButton = null;
-        private System.Windows.Forms.Timer autoSaveTimer;
         private bool isViewingSnapshot = false;
 
         private void OpenFile()
@@ -159,7 +157,7 @@ namespace Code_Editor
             }
         }
 
-        
+
         private async Task SaveCurrentFile()
         {
             if (string.IsNullOrEmpty(currentFile))
@@ -169,19 +167,19 @@ namespace Code_Editor
             {
                 string code = await editor.ExecuteScriptAsync("getEditorCode();");
                 string editorCode = JsonSerializer.Deserialize<string>(code);
-                
+
                 // Update in-memory storage
                 openFiles.Set(currentFile, editorCode);
-                
+
                 // Get file path and save to disk
                 var allFiles = openFiles.GetAll();
                 var currentFileNode = allFiles.FirstOrDefault(f => f.fileName == currentFile);
-                
+
                 if (!string.IsNullOrEmpty(currentFileNode.filePath))
                 {
                     FileManager.SaveFile(currentFileNode.filePath, editorCode);
                 }
-                
+
                 isViewingSnapshot = false;
             }
             catch (Exception ex)
@@ -219,12 +217,47 @@ namespace Code_Editor
             MessageBox.Show("File saved!");
         }
 
-        private void InitializeAutoSaveTimer()
+        private async void saveToMemoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            autoSaveTimer = new System.Windows.Forms.Timer();
-            autoSaveTimer.Interval = 10000;
-            autoSaveTimer.Tick += async (s, e) => await CaptureSnapshot();
-            autoSaveTimer.Start();
+            if (string.IsNullOrEmpty(currentFile))
+                return;
+
+            try
+            {
+                string code = await editor.ExecuteScriptAsync("getEditorCode();");
+                string editorCode = JsonSerializer.Deserialize<string>(code);
+
+                // Get file path from CustomLinkedList
+                var allFiles = openFiles.GetAll();
+                var currentFileNode = allFiles.FirstOrDefault(f => f.fileName == currentFile);
+
+                snapshotQueue.Enqueue(new CustomQueue.QueueElement
+                {
+                    fileName = currentFile,
+                    fileContent = editorCode,
+                    timestamp = DateTime.Now,
+                    filePath = currentFileNode.filePath
+                });
+
+                UpdateSnapshotListBox();
+                MessageBox.Show("Snapshot saved to memory!");
+            }
+            catch (Exception ex)
+            {
+                code_output.Text = $"Snapshot Error: {ex.Message}";
+            }
+        }
+
+        private void UpdateSnapshotListBox()
+        {
+            code_queue.Items.Clear();
+            var snapshots = snapshotQueue.GetAll();
+
+            foreach (var snapshot in snapshots)
+            {
+                string displayText = $"{snapshot.fileName}.. saved: {snapshot.timestamp:HH:mm:ss}";
+                code_queue.Items.Add(displayText);
+            }
         }
 
         private async Task CaptureSnapshot()
@@ -252,18 +285,6 @@ namespace Code_Editor
                 UpdateSnapshotListBox();
             }
             catch { }
-        }
-
-        private void UpdateSnapshotListBox()
-        {
-            code_queue.Items.Clear();
-            var snapshots = snapshotQueue.GetAll();
-
-            foreach (var snapshot in snapshots)
-            {
-                string displayText = $"{snapshot.fileName} - {snapshot.timestamp:HH:mm:ss}";
-                code_queue.Items.Add(displayText);
-            }
         }
 
         private async void code_queue_SelectedIndexChanged(object sender, EventArgs e)
@@ -322,5 +343,6 @@ namespace Code_Editor
                 }
             }
         }
+
     }
 }
