@@ -20,10 +20,9 @@ namespace Code_Editor
             InitializeAutoSaveTimer();
         }
 
-        private CustomStack openFiles = new CustomStack();
+        private CustomLinkedList openFiles = new CustomLinkedList();
         private CustomQueue snapshotQueue = new CustomQueue();
         private Dictionary<string, Button> fileButtons = new Dictionary<string, Button>();
-        private Dictionary<string, string> filePaths = new Dictionary<string, string>();
         private string currentFile = "";
         private Button activeButton = null;
         private System.Windows.Forms.Timer autoSaveTimer;
@@ -35,27 +34,30 @@ namespace Code_Editor
             if (ofd.ShowDialog() == DialogResult.OK)
             {
                 string fileName = Path.GetFileName(ofd.FileName);
-                string content = File.ReadAllText(ofd.FileName);
+                string filePath = ofd.FileName;
 
                 if (!openFiles.ContainsKey(fileName))
                 {
-                    openFiles.Set(fileName, content);
-                    filePaths[fileName] = ofd.FileName;
+                    try
+                    {
+                        string content = FileManager.ReadFile(filePath);
+                        openFiles.Set(fileName, content, filePath);
 
-                    Button fileBtn = new Button();
-                    fileBtn.Text = fileName;
-                    fileBtn.Dock = DockStyle.Top;
-                    fileBtn.Padding = new Padding(10, 5, 10, 5);
-                    fileBtn.Height = 35;
-                    fileBtn.FlatStyle = FlatStyle.Flat;
-                    fileBtn.FlatAppearance.BorderSize = 0;
-                    fileBtn.BackColor = ColorTranslator.FromHtml("#2d2d30");
-                    fileBtn.ForeColor = Color.White;
-                    fileBtn.TextAlign = ContentAlignment.MiddleLeft;
-                    fileBtn.Click += (s, e) => SwitchToFile(fileName);
+                        Panel filePanel = FileTabManager.CreateFileTab(
+                            fileName,
+                            SwitchToFile,
+                            CloseFile
+                        );
 
-                    fileButtons[fileName] = fileBtn;
-                    splitContainer1.Panel1.Controls.Add(fileBtn);
+                        Button fileBtn = FileTabManager.GetFileButtonFromTab(filePanel);
+                        fileButtons[fileName] = fileBtn;
+                        splitContainer1.Panel1.Controls.Add(filePanel);
+                    }
+                    catch (Exception ex)
+                    {
+                        code_output.Text = $"Error opening file: {ex.Message}";
+                        return;
+                    }
                 }
 
                 SwitchToFile(fileName);
@@ -81,15 +83,13 @@ namespace Code_Editor
 
             if (activeButton != null)
             {
-                activeButton.BackColor = ColorTranslator.FromHtml("#2d2d30");
-                activeButton.ForeColor = Color.White;
+                FileTabManager.SetTabInactive(activeButton);
             }
 
             if (fileButtons.ContainsKey(fileName))
             {
                 activeButton = fileButtons[fileName];
-                activeButton.BackColor = ColorTranslator.FromHtml("#007ACC");
-                activeButton.ForeColor = Color.White;
+                FileTabManager.SetTabActive(activeButton);
             }
 
             currentFile = fileName;
@@ -169,7 +169,19 @@ namespace Code_Editor
             {
                 string code = await editor.ExecuteScriptAsync("getEditorCode();");
                 string editorCode = JsonSerializer.Deserialize<string>(code);
+                
+                // Update in-memory storage
                 openFiles.Set(currentFile, editorCode);
+                
+                // Get file path and save to disk
+                var allFiles = openFiles.GetAll();
+                var currentFileNode = allFiles.FirstOrDefault(f => f.fileName == currentFile);
+                
+                if (!string.IsNullOrEmpty(currentFileNode.filePath))
+                {
+                    FileManager.SaveFile(currentFileNode.filePath, editorCode);
+                }
+                
                 isViewingSnapshot = false;
             }
             catch (Exception ex)
@@ -210,7 +222,7 @@ namespace Code_Editor
         private void InitializeAutoSaveTimer()
         {
             autoSaveTimer = new System.Windows.Forms.Timer();
-            autoSaveTimer.Interval = 8000;
+            autoSaveTimer.Interval = 10000;
             autoSaveTimer.Tick += async (s, e) => await CaptureSnapshot();
             autoSaveTimer.Start();
         }
@@ -225,12 +237,16 @@ namespace Code_Editor
                 string code = await editor.ExecuteScriptAsync("getEditorCode();");
                 string editorCode = JsonSerializer.Deserialize<string>(code);
 
+                // Get file path from CustomLinkedList
+                var allFiles = openFiles.GetAll();
+                var currentFileNode = allFiles.FirstOrDefault(f => f.fileName == currentFile);
+
                 snapshotQueue.Enqueue(new CustomQueue.QueueElement
                 {
                     fileName = currentFile,
                     fileContent = editorCode,
                     timestamp = DateTime.Now,
-                    filePath = filePaths.ContainsKey(currentFile) ? filePaths[currentFile] : ""
+                    filePath = currentFileNode.filePath
                 });
 
                 UpdateSnapshotListBox();
@@ -279,6 +295,31 @@ namespace Code_Editor
 
                 isViewingSnapshot = true;
                 this.Text = $"Code Editor - Snapshot: {snapshot.fileName} ({snapshot.timestamp:HH:mm:ss})";
+            }
+        }
+
+        private void CloseFile(string fileName, Panel filePanel)
+        {
+            if (fileButtons.ContainsKey(fileName))
+            {
+                // Remove from CustomLinkedList
+                openFiles.Remove(fileName);
+
+                // Remove file button and panel
+                splitContainer1.Panel1.Controls.Remove(filePanel);
+                fileButtons.Remove(fileName);
+
+                // Switch to another file if available
+                if (fileButtons.Count > 0 && currentFile == fileName)
+                {
+                    var firstFile = fileButtons.First();
+                    SwitchToFile(firstFile.Key);
+                }
+                else if (fileButtons.Count == 0)
+                {
+                    currentFile = "";
+                    activeButton = null;
+                }
             }
         }
     }
