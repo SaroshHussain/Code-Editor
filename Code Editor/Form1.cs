@@ -2,6 +2,7 @@
 using Microsoft.Web.WebView2.WinForms;
 using ReaLTaiizor.Forms;
 using System.Diagnostics;
+
 using System.Text.Json;
 using System.Windows.Forms;
 
@@ -9,6 +10,7 @@ namespace Code_Editor
 {
     public partial class Form1 : ReaLTaiizor.Forms.LostForm
     {
+        private readonly CodeCompilation _compiler = new();
         public Form1()
         {
             InitializeComponent();
@@ -135,7 +137,13 @@ namespace Code_Editor
                 if (fileExtension == ".cpp")
                 {
                     string cppCode = openFiles.Get(currentFile);
-                    string output = await CompileCppWithPowerShell(cppCode);
+                    string output = await _compiler.CompileCppWithPowerShell(cppCode);
+                    code_output.Text = output;
+                }
+                else if (fileExtension == ".py")
+                {
+                    string pythonCode = openFiles.Get(currentFile);
+                    string output = await _compiler.ExecutePythonScript(pythonCode);
                     code_output.Text = output;
                 }
                 else
@@ -151,70 +159,7 @@ namespace Code_Editor
             }
         }
 
-        private async Task<string> CompileCppWithPowerShell(string cppCode)
-        {
-            string tempDir = Path.Combine(Path.GetTempPath(), "CppCodeRunner");
-            Directory.CreateDirectory(tempDir);
-
-            string sourceFile = Path.Combine(tempDir, "temp.cpp");
-            string exeFile = Path.Combine(tempDir, "temp.exe");
-
-            try
-            {
-                File.WriteAllText(sourceFile, cppCode);
-
-                var compileProcess = new ProcessStartInfo
-                {
-                    FileName = @"C:\msys64\msys2_shell.cmd",
-                    Arguments = $"-mingw64 -defterm -no-start -here -c \"g++ '{sourceFile}' -o '{exeFile}' -static -static-libgcc -static-libstdc++ -O2 -Wall\"",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                };
-
-                string compileOutput = "";
-                string compileErrors = "";
-                using (Process p = Process.Start(compileProcess))
-                {
-                    compileOutput = await p.StandardOutput.ReadToEndAsync();
-                    compileErrors = await p.StandardError.ReadToEndAsync();
-                    await p.WaitForExitAsync();
-                }
-
-                await Task.Delay(500);
-
-                if (!File.Exists(exeFile))
-                {
-                    return "❌ Compilation Failed:\n" + compileErrors + "\n" + compileOutput;
-                }
-
-                var runProcess = new ProcessStartInfo
-                {
-                    FileName = "cmd.exe",
-                    Arguments = $"/k \"{exeFile}\" && pause && exit",
-                    UseShellExecute = true,
-                    CreateNoWindow = false
-                };
-
-                Process.Start(runProcess);
-
-                return "✔ Compilation Successful!\n\nProgram is running in a new terminal window...";
-            }
-            catch (Exception ex)
-            {
-                return "❌ Error: " + ex.Message;
-            }
-            finally
-            {
-                try
-                {
-                    if (File.Exists(sourceFile)) File.Delete(sourceFile);
-                }
-                catch { }
-            }
-        }
-
+        
         private async Task SaveCurrentFile()
         {
             if (string.IsNullOrEmpty(currentFile))

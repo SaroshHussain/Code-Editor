@@ -7,7 +7,7 @@ namespace Code_Editor
 {
     internal class CustomStack
     {
-        private int top = -1;
+        private int top = -1; 
         internal struct StackElement
         {
             public string fileName;
