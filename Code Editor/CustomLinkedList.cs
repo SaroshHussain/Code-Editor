@@ -18,12 +18,12 @@ namespace Code_Editor
 
         public void Push(string fileName, string fileContent, string filePath = "")
         {
-            elements.AddLast(new FileNode
-            {
-                fileName = fileName,
-                fileContent = fileContent,
-                filePath = filePath
-            });
+            FileNode file;
+            file.fileContent = fileContent;
+            file.filePath = filePath;
+            file.fileName = fileName;
+
+            elements.AddLast(file);
         }
 
         public FileNode Pop()
@@ -51,10 +51,19 @@ namespace Code_Editor
         {
             return elements.Count == 0;
         }
-
+        
         public bool ContainsKey(string fileName)
         {
-            return elements.Any(e => e.fileName == fileName);
+            var current = elements.First;
+            while (current != null)
+            {
+                if(current.Value.fileName == fileName)
+                {
+                    return true;
+                }
+                current = current.Next;
+            }
+            return false;
         }
 
         public string Get(string fileName)
