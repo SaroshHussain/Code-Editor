@@ -74,6 +74,14 @@
                 e.preventDefault();
                 window.chrome.webview.postMessage({ action: 'open' });
             }
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                window.chrome.webview.postMessage({ action: 'new' });
+            }
+            if (e.ctrlKey && e.shiftKey && e.key === 'F5') {
+                e.preventDefault();
+                window.chrome.webview.postMessage({ action: 'run' });
+            }
         });
     </script>
 </body>

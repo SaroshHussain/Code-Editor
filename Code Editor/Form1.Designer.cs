@@ -196,7 +196,7 @@
             run_code.BackColor = Color.FromArgb(60, 63, 65);
             run_code.ForeColor = Color.FromArgb(220, 220, 220);
             run_code.Name = "run_code";
-            run_code.ShortcutKeys = Keys.Control | Keys.F5;
+            run_code.ShortcutKeys = Keys.Control | Keys.Shift | Keys.F5;
             run_code.Size = new Size(48, 24);
             run_code.Text = "Run";
             run_code.Click += run_code_Click;

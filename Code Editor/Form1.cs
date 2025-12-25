@@ -125,6 +125,14 @@ namespace Code_Editor
                 {
                     OpenFile();
                 }
+                else if (json.Contains("\"action\":\"new\""))
+                {
+                    CreateNewFile();
+                }
+                else if (json.Contains("\"action\":\"run\""))
+                {
+                    await RunCodeAsync();
+                }
             };
             
             string htmlPath = Path.Combine(Application.StartupPath, "index.html");
@@ -138,6 +146,11 @@ namespace Code_Editor
         }
 
         private async void run_code_Click(object sender, EventArgs e)
+        {
+            await RunCodeAsync();
+        }
+
+        private async Task RunCodeAsync()
         {
             try
             {
@@ -345,5 +358,47 @@ namespace Code_Editor
             }
         }
 
+        private void CreateNewFile()
+        {
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.Filter = "C++ files (*.cpp)|*.cpp|JavaScript files (*.js)|*.js|TypeScript files (*.ts)|*.ts|Python files (*.py)|*.py|All files (*.*)|*.*";
+            sfd.DefaultExt = ".cpp";
+
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                string fileName = Path.GetFileName(sfd.FileName);
+                string filePath = sfd.FileName;
+
+                if (!openFiles.ContainsKey(fileName))
+                {
+                    try
+                    {
+                        // Create empty file on disk
+                        FileManager.SaveFile(filePath, "");
+
+                        // Add to in-memory storage
+                        openFiles.Set(fileName, "", filePath);
+
+                        // Create tab
+                        Panel filePanel = FileTabManager.CreateFileTab(fileName, SwitchToFile, CloseFile);
+                        Button fileBtn = FileTabManager.GetFileButtonFromTab(filePanel);
+                        fileButtons[fileName] = fileBtn;
+                        splitContainer1.Panel1.Controls.Add(filePanel);
+
+                        SwitchToFile(fileName);
+                        MessageBox.Show("New file created!");
+                    }
+                    catch (Exception ex)
+                    {
+                        code_output.Text = $"Error creating file: {ex.Message}";
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("File already open!");
+                    SwitchToFile(fileName);
+                }
+            }
+        }
     }
 }
