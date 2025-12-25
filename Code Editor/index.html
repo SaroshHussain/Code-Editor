@@ -19,6 +19,7 @@
 </head>
 <body>
     <div id="container"></div>
+    <script src="typescript.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min/vs/loader.min.js"></script>
     <script>
         require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor/min/vs' }});
@@ -56,7 +57,25 @@
             };
             
             try {
-                eval(editor.getValue());
+                let code = editor.getValue();
+                
+                // Wait for TypeScript to load
+                if (typeof ts === 'undefined') {
+                    console.log = originalLog;
+                    return 'Error: TypeScript library not loaded yet. Please try again in a moment.';
+                }
+                
+                // Transpile TypeScript to JavaScript using TypeScript compiler
+                const transpiled = ts.transpileModule(code, {
+                    compilerOptions: { 
+                        module: ts.ModuleKind.ES2020,
+                        target: ts.ScriptTarget.ES2020,
+                        removeComments: true,
+                        strict: false
+                    }
+                });
+                
+                eval(transpiled.outputText);
                 console.log = originalLog;
                 return output.length > 0 ? output.join('\n') : 'Code executed';
             } catch(e) {
