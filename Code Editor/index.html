@@ -64,6 +64,17 @@
                 return 'Error: ' + e.message;
             }
         };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                window.chrome.webview.postMessage({ action: 'save' });
+            }
+            if (e.ctrlKey && e.key === 'o') {
+                e.preventDefault();
+                window.chrome.webview.postMessage({ action: 'open' });
+            }
+        });
     </script>
 </body>
 </html>

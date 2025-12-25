@@ -15,8 +15,8 @@ namespace Code_Editor
         {
             InitializeComponent();
             InitializeWebView();
-            this.KeyPreview = true;
-            this.KeyDown += Form1_KeyDown;
+            //this.KeyPreview = true;
+            //this.KeyDown += Form1_KeyDown;
         }
 
         private CustomLinkedList openFiles = new CustomLinkedList();
@@ -114,6 +114,21 @@ namespace Code_Editor
         private async void InitializeWebView()
         {
             await editor.EnsureCoreWebView2Async();
+            
+            editor.CoreWebView2.WebMessageReceived += async (s, e) =>
+            {
+                string json = e.WebMessageAsJson;
+                if (json.Contains("\"action\":\"save\""))
+                {
+                    await SaveCurrentFile();
+                    MessageBox.Show("File saved!");
+                }
+                else if (json.Contains("\"action\":\"open\""))
+                {
+                    OpenFile();
+                }
+            };
+            
             string htmlPath = Path.Combine(Application.StartupPath, "index.html");
             editor.Source = new Uri(htmlPath);
         }
@@ -188,23 +203,23 @@ namespace Code_Editor
             }
         }
 
-        private async void Form1_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Control && e.KeyCode == Keys.S)
-            {
-                e.Handled = true;
-                e.SuppressKeyPress = true;
-                await SaveCurrentFile();
-                MessageBox.Show("File saved!");
-            }
+        //private async void Form1_KeyDown(object sender, KeyEventArgs e)
+        //{
+        //    if (e.Control && e.KeyCode == Keys.S)
+        //    {
+        //        e.Handled = true;
+        //        e.SuppressKeyPress = true;
+        //        await SaveCurrentFile();
+        //        MessageBox.Show("File saved!");
+        //    }
 
-            if (e.Control && e.KeyCode == Keys.O)
-            {
-                e.Handled = true;
-                e.SuppressKeyPress = true;
-                OpenFile();
-            }
-        }
+        //    if (e.Control && e.KeyCode == Keys.O)
+        //    {
+        //        e.Handled = true;
+        //        e.SuppressKeyPress = true;
+        //        OpenFile();
+        //    }
+        //}
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
