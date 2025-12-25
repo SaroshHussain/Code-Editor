@@ -157,6 +157,12 @@ namespace Code_Editor
                     string output = await _compiler.ExecutePythonScript(pythonCode);
                     code_output.Text = output;
                 }
+                else if (fileExtension == ".ts" || fileExtension == ".js")
+                {
+                    string outputJson = await editor.ExecuteScriptAsync("executeCode();");
+                    string output = JsonSerializer.Deserialize<string>(outputJson);
+                    code_output.Text = output;
+                }
                 else
                 {
                     string outputJson = await editor.ExecuteScriptAsync("executeCode();");
