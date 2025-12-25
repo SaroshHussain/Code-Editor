@@ -237,7 +237,7 @@
             Margin = new Padding(3, 2, 3, 2);
             Name = "Form1";
             Padding = new Padding(3, 48, 3, 2);
-            Text = "BARI CHURAIIIL";
+            Text = "Code Editor";
             Load += Form1_Load;
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();

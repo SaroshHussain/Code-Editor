@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Linq;
 
 namespace Code_Editor
 {
@@ -14,115 +12,176 @@ namespace Code_Editor
             public string filePath;
         }
 
-        private LinkedList<FileNode> elements = new LinkedList<FileNode>();
+        private class Node
+        {
+            public FileNode data;
+            public Node next;
+
+            public Node(FileNode data)
+            {
+                this.data = data;
+                this.next = null;
+            }
+        }
+
+        private Node head;
+        private Node tail;
+        private int count;
+
+        public CustomLinkedList()
+        {
+            head = null;
+            tail = null;
+            count = 0;
+        }
 
         public void Push(string fileName, string fileContent, string filePath = "")
         {
-            FileNode file;
-            file.fileContent = fileContent;
-            file.filePath = filePath;
-            file.fileName = fileName;
+            FileNode file = new FileNode
+            {
+                fileName = fileName,
+                fileContent = fileContent,
+                filePath = filePath
+            };
 
-            elements.AddLast(file);
+            Node newNode = new Node(file);
+
+            if (head == null)
+            {
+                head = tail = newNode;
+            }
+            else
+            {
+                tail.next = newNode;
+                tail = newNode;
+            }
+            count++;
         }
 
         public FileNode Pop()
         {
             if (IsEmpty())
-            {
                 throw new InvalidOperationException("LinkedList is empty.");
-            }
 
-            FileNode result = elements.Last.Value;
-            elements.RemoveLast();
+            FileNode result = tail.data;
+
+            if (head == tail)
+            {
+                head = tail = null;
+            }
+            else
+            {
+                Node current = head;
+                while (current.next != tail)
+                {
+                    current = current.next;
+                }
+                tail = current;
+                tail.next = null;
+            }
+            count--;
             return result;
         }
 
         public FileNode Peek()
         {
             if (IsEmpty())
-            {
                 throw new InvalidOperationException("LinkedList is empty.");
-            }
-            return elements.Last.Value;
+
+            return tail.data;
         }
 
-        public bool IsEmpty()
-        {
-            return elements.Count == 0;
-        }
-        
+        public bool IsEmpty() => head == null;
+
         public bool ContainsKey(string fileName)
         {
-            var current = elements.First;
+            Node current = head;
             while (current != null)
             {
-                if(current.Value.fileName == fileName)
-                {
+                if (current.data.fileName == fileName)
                     return true;
-                }
-                current = current.Next;
+                current = current.next;
             }
             return false;
         }
 
         public string Get(string fileName)
         {
-            var node = elements.FirstOrDefault(e => e.fileName == fileName);
-            if (node.fileName == null)
+            Node current = head;
+            while (current != null)
             {
-                throw new KeyNotFoundException($"'{fileName}' not found.");
+                if (current.data.fileName == fileName)
+                    return current.data.fileContent;
+                current = current.next;
             }
-            return node.fileContent;
+            throw new KeyNotFoundException($"'{fileName}' not found.");
         }
 
         public void Set(string fileName, string fileContent, string filePath = "")
         {
-            var linkedNode = elements.FirstOrDefault(e => e.fileName == fileName);
-            
-            if (linkedNode.fileName != null)
+            Node current = head;
+            while (current != null)
             {
-                var node = elements.Find(linkedNode);
-                if (node != null)
+                if (current.data.fileName == fileName)
                 {
-                    elements.Remove(node);
-                    elements.AddLast(new FileNode
+                    current.data = new FileNode
                     {
-                        fileName = linkedNode.fileName,
+                        fileName = fileName,
                         fileContent = fileContent,
-                        filePath = string.IsNullOrEmpty(filePath) ? linkedNode.filePath : filePath
-                    });
+                        filePath = string.IsNullOrEmpty(filePath) ? current.data.filePath : filePath
+                    };
+                    return;
                 }
+                current = current.next;
             }
-            else
-            {
-                Push(fileName, fileContent, filePath);
-            }
+            // If not found, add it
+            Push(fileName, fileContent, filePath);
         }
 
         public void Remove(string fileName)
         {
-            var node = elements.FirstOrDefault(e => e.fileName == fileName);
-            if (node.fileName == null)
-            {
+            if (IsEmpty())
                 throw new KeyNotFoundException($"'{fileName}' not found.");
+
+            // If head node matches
+            if (head.data.fileName == fileName)
+            {
+                head = head.next;
+                if (head == null)
+                    tail = null;
+                count--;
+                return;
             }
 
-            var linkedNode = elements.Find(node);
-            if (linkedNode != null)
+            // Search for the node
+            Node current = head;
+            while (current.next != null)
             {
-                elements.Remove(linkedNode);
+                if (current.next.data.fileName == fileName)
+                {
+                    if (current.next == tail)
+                        tail = current;
+                    current.next = current.next.next;
+                    count--;
+                    return;
+                }
+                current = current.next;
             }
+            throw new KeyNotFoundException($"'{fileName}' not found.");
         }
 
         public List<FileNode> GetAll()
         {
-            return new List<FileNode>(elements);
+            List<FileNode> result = new List<FileNode>();
+            Node current = head;
+            while (current != null)
+            {
+                result.Add(current.data);
+                current = current.next;
+            }
+            return result;
         }
 
-        public int Count
-        {
-            get { return elements.Count; }
-        }
+        public int Count => count;
     }
-}
+}   
