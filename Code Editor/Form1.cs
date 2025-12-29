@@ -1,10 +1,4 @@
-﻿using Microsoft.Web.WebView2.Core;
-using Microsoft.Web.WebView2.WinForms;
-using ReaLTaiizor.Forms;
-using System.Diagnostics;
-
-using System.Text.Json;
-using System.Windows.Forms;
+﻿using System.Text.Json;
 
 namespace Code_Editor
 {
@@ -18,11 +12,11 @@ namespace Code_Editor
         }
 
         private CustomLinkedList openFiles = new CustomLinkedList();
-        private CustomQueue snapshotQueue = new CustomQueue();
+        private CustomQueue snapshotQueue = new();
         private Dictionary<string, Button> fileButtons = new Dictionary<string, Button>();
         private string currentFile = "";
         private Button activeButton = null;
-        private bool isViewingSnapshot = false;
+
 
         private void OpenFile()
         {
@@ -63,7 +57,7 @@ namespace Code_Editor
         private async void SwitchToFile(string fileName)
         {
             // Save current editor content before switching if not viewing snapshot
-            if (!string.IsNullOrEmpty(currentFile) && !isViewingSnapshot)
+            if (!string.IsNullOrEmpty(currentFile))
             {
                 try
                 {
@@ -74,9 +68,7 @@ namespace Code_Editor
                 catch { }
             }
 
-            isViewingSnapshot = false;
-            this.Text = "Code Editor";
-
+            
             if (activeButton != null)
             {
                 FileTabManager.SetTabInactive(activeButton);
@@ -200,7 +192,6 @@ namespace Code_Editor
                 string code = await editor.ExecuteScriptAsync("getEditorCode();");
                 string editorCode = JsonSerializer.Deserialize<string>(code);
 
-                // Update in-memory storage
                 openFiles.Set(currentFile, editorCode);
 
                 // Get file path and save to disk
@@ -212,7 +203,6 @@ namespace Code_Editor
                     FileManager.SaveFile(currentFileNode.filePath, editorCode);
                 }
 
-                isViewingSnapshot = false;
             }
             catch (Exception ex)
             {
@@ -274,32 +264,6 @@ namespace Code_Editor
             }
         }
 
-        private async Task CaptureSnapshot()
-        {
-            if (string.IsNullOrEmpty(currentFile) || isViewingSnapshot)
-                return;
-
-            try
-            {
-                string code = await editor.ExecuteScriptAsync("getEditorCode();");
-                string editorCode = JsonSerializer.Deserialize<string>(code);
-
-                // Get file path from CustomLinkedList
-                var allFiles = openFiles.GetAll();
-                var currentFileNode = allFiles.FirstOrDefault(f => f.fileName == currentFile);
-
-                snapshotQueue.Enqueue(new CustomQueue.QueueElement
-                {
-                    fileName = currentFile,
-                    fileContent = editorCode,
-                    timestamp = DateTime.Now,
-                    filePath = currentFileNode.filePath
-                });
-
-                UpdateSnapshotListBox();
-            }
-            catch { }
-        }
 
         private async void code_queue_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -308,7 +272,7 @@ namespace Code_Editor
 
 
             // Save current editor content before viewing snapshot
-            if (!string.IsNullOrEmpty(currentFile) && !isViewingSnapshot)
+            if (!string.IsNullOrEmpty(currentFile))
             {
                 try
                 {
@@ -328,7 +292,6 @@ namespace Code_Editor
 
                 await editor.ExecuteScriptAsync($"setEditorCode({escapedCode}, '{language}');");
 
-                isViewingSnapshot = true;
                 this.Text = $"Code Editor - Snapshot: {snapshot.fileName} ({snapshot.timestamp:HH:mm:ss})";
             }
         }
@@ -337,7 +300,6 @@ namespace Code_Editor
         {
             if (fileButtons.ContainsKey(fileName))
             {
-                // Remove from CustomLinkedList
                 openFiles.Remove(fileName);
 
                 // Remove file button and panel
@@ -373,13 +335,9 @@ namespace Code_Editor
                 {
                     try
                     {
-                        // Create empty file on disk
                         FileManager.SaveFile(filePath, "");
 
-                        // Add to in-memory storage
                         openFiles.Set(fileName, "", filePath);
-
-                        // Create tab
                         Panel filePanel = FileTabManager.CreateFileTab(fileName, SwitchToFile, CloseFile);
                         Button fileBtn = FileTabManager.GetFileButtonFromTab(filePanel);
                         fileButtons[fileName] = fileBtn;

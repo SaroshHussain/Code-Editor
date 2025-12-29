@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-
-namespace Code_Editor
+﻿namespace Code_Editor
 {
     internal class CustomQueue
     {
-        private int head = 0;
+
         internal struct QueueElement
         {
             public string fileName;
@@ -15,10 +10,10 @@ namespace Code_Editor
             public DateTime timestamp;
             public string filePath;
         }
-
+  
         private readonly List<QueueElement> elements = new List<QueueElement>();
         private readonly int maxCapacity = 50;
-
+        
         public void Enqueue(QueueElement element)
         {
             if (elements.Count >= maxCapacity)
@@ -82,22 +77,5 @@ namespace Code_Editor
             return elements.Where(e => e.fileName == fileName).ToList();
         }
 
-        public QueueElement GetLatest()
-        {
-            if (IsEmpty())
-            {
-                throw new InvalidOperationException("Queue is empty.");
-            }
-            return elements[elements.Count - 1];
-        }
-
-        public QueueElement GetOldest()
-        {
-            if (IsEmpty())
-            {
-                throw new InvalidOperationException("Queue is empty.");
-            }
-            return elements[0];
-        }
     }
 }

@@ -84,43 +84,20 @@ namespace Code_Editor
 
                 var runProcess = new ProcessStartInfo
                 {
-                    FileName = "python",
-                    Arguments = $"\"{sourceFile}\"",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
+                    FileName = "cmd.exe",
+                    Arguments = $"/k python \"{sourceFile}\" && pause && exit",
+                    UseShellExecute = true,
+                    CreateNoWindow = false
                 };
 
-                string output = "";
-                string error = "";
-                using (Process p = Process.Start(runProcess))
-                {
-                    output = await p.StandardOutput.ReadToEndAsync();
-                    error = await p.StandardError.ReadToEndAsync();
-                    await p.WaitForExitAsync();
-                }
+                var process = Process.Start(runProcess);
 
-                if (!string.IsNullOrEmpty(error))
-                {
-                    return "❌ Error:\n" + error;
-                }
-
-                return string.IsNullOrEmpty(output) ? "✔ Script executed successfully" : output;
+                return "✔ Python script running in a new terminal window...";
             }
             catch (Exception ex)
             {
                 return "❌ Error: " + ex.Message;
             }
-            finally
-            {
-                try
-                {
-                    if (File.Exists(sourceFile)) File.Delete(sourceFile);
-                }
-                catch { }
-            }
         }
-
     }
 }
