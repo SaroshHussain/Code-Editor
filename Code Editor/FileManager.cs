@@ -49,20 +49,5 @@ namespace Code_Editor
         {
             return !string.IsNullOrEmpty(filePath) && File.Exists(filePath);
         }
-
-        public static void DeleteFile(string filePath)
-        {
-            try
-            {
-                if (FileExists(filePath))
-                {
-                    File.Delete(filePath);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Error deleting file: {ex.Message}", ex);
-            }
-        }
     }
 }

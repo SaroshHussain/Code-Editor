@@ -12,23 +12,18 @@ namespace Code_Editor
 
         public static Panel CreateFileTab(string fileName, Action<string> onFileClick, Action<string, Panel> onCloseClick)
         {
-            // Create main panel for the tab
             Panel filePanel = new Panel();
             filePanel.Dock = DockStyle.Top;
             filePanel.Height = TAB_HEIGHT;
             filePanel.Padding = new Padding(0);
 
-            // Create file name button
             Button fileBtn = CreateFileButton(fileName, onFileClick);
 
-            // Create close button
             Button closeBtn = CreateCloseButton(fileName, filePanel, onCloseClick);
 
-            // Add buttons to panel
             filePanel.Controls.Add(fileBtn);
             filePanel.Controls.Add(closeBtn);
 
-            // Store references for later access
             filePanel.Tag = new { FileName = fileName, FileButton = fileBtn };
 
             return filePanel;
